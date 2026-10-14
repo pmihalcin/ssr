@@ -1,0 +1,5 @@
+{
+  "name": "@ssr/csr",
+  "private": true,
+  "description": "The CSR app: a Vite + React SPA served by the BFF in services/bff."
+}

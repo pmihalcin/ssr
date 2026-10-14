@@ -1,0 +1,5 @@
+{
+  "name": "@ssr/ui",
+  "private": true,
+  "description": "Shared UI components used by both apps."
+}

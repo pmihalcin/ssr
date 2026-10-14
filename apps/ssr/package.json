@@ -1,0 +1,5 @@
+{
+  "name": "@ssr/ssr",
+  "private": true,
+  "description": "The SSR app: Next.js App Router (see ADR-0002)."
+}

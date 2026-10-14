@@ -1,0 +1,33 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      # Tokens always carry the browser-facing issuer, while containers can still
+      # reach Keycloak on its service name for discovery and keys.
+      KC_HOSTNAME: http://localhost:8080
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./keycloak/ssr-realm.json:/opt/keycloak/data/import/ssr-realm.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  api:
+    build: ./services/api
+    environment:
+      Keycloak__Authority: http://localhost:8080/realms/ssr
+      Keycloak__MetadataAddress: http://keycloak:8080/realms/ssr/.well-known/openid-configuration
+      Keycloak__RequireHttpsMetadata: "false"
+    ports:
+      - "5100:8080"
+    depends_on:
+      keycloak:
+        condition: service_healthy

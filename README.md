@@ -47,3 +47,13 @@ Without the header the API returns `401`. Tokens last 5 minutes.
 ```sh
 cd services/api && dotnet test
 ```
+
+## Smoke tests
+
+Playwright smoke tests log in as `alice`, read the Dashboard, open an Order and log out, once per app. They run in CI against the compose stack and don't check timings.
+
+```sh
+docker compose up --build --wait
+pnpm --filter @ssr/e2e exec playwright install chromium
+pnpm --filter @ssr/e2e test
+```

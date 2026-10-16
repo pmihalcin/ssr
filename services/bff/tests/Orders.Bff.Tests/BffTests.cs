@@ -80,6 +80,55 @@ public class BffTests(BffFactory factory) : IClassFixture<BffFactory>
     }
 
     [Fact]
+    public async Task A_token_expiring_within_30_seconds_is_refreshed_before_proxying_and_the_cookie_is_updated()
+    {
+        factory.ApiRequests.Clear();
+        factory.Keycloak.RefreshRequests.Clear();
+        factory.Keycloak.RejectRefresh = false;
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/orders/recent");
+        request.Headers.Add("Cookie", factory.SessionCookieFor("old-access-token", DateTimeOffset.UtcNow.AddSeconds(10), "the-refresh-token"));
+
+        var response = await NewClient().SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var refresh = Assert.Single(factory.Keycloak.RefreshRequests);
+        Assert.Equal("refresh_token", refresh["grant_type"]);
+        Assert.Equal("the-refresh-token", refresh["refresh_token"]);
+        Assert.Equal("Bearer fresh-access-token", Assert.Single(factory.ApiRequests).Headers.Authorization!.ToString());
+        Assert.Contains(response.Headers.GetValues("Set-Cookie"), cookie => cookie.StartsWith("csr.session="));
+    }
+
+    [Fact]
+    public async Task A_token_with_plenty_of_lifetime_left_is_not_refreshed()
+    {
+        factory.ApiRequests.Clear();
+        factory.Keycloak.RefreshRequests.Clear();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/orders/recent");
+        request.Headers.Add("Cookie", factory.SessionCookieFor("the-access-token", DateTimeOffset.UtcNow.AddMinutes(4), "the-refresh-token"));
+
+        await NewClient().SendAsync(request);
+
+        Assert.Empty(factory.Keycloak.RefreshRequests);
+        Assert.Equal("Bearer the-access-token", Assert.Single(factory.ApiRequests).Headers.Authorization!.ToString());
+    }
+
+    [Fact]
+    public async Task A_failed_refresh_ends_the_session_with_a_401_and_does_not_reach_the_api()
+    {
+        factory.ApiRequests.Clear();
+        factory.Keycloak.RejectRefresh = true;
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/orders/recent");
+        request.Headers.Add("Cookie", factory.SessionCookieFor("old-access-token", DateTimeOffset.UtcNow.AddSeconds(-5), "expired-refresh-token"));
+
+        var response = await NewClient().SendAsync(request);
+        factory.Keycloak.RejectRefresh = false;
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Empty(factory.ApiRequests);
+        Assert.Contains(response.Headers.GetValues("Set-Cookie"), cookie => cookie.StartsWith("csr.session=;"));
+    }
+
+    [Fact]
     public void The_session_cookie_is_httpOnly_secure_and_same_site()
     {
         var cookie = factory.Services.GetRequiredService<IOptionsMonitor<CookieAuthenticationOptions>>()

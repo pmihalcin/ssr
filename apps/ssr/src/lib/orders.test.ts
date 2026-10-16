@@ -49,3 +49,19 @@ describe("fetchRevenueSummary", () => {
     );
   });
 });
+
+describe("Simulated Latency", () => {
+  it("passes the page's latency on to the orders request", async () => {
+    const fetchMock = vi.fn(async () => Response.json([]));
+    await fetchRecentOrders("t", { baseUrl, latency: "1500", fetch: fetchMock as typeof fetch });
+    const [, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(init.headers).toMatchObject({ "X-Simulated-Latency": "1500" });
+  });
+
+  it("passes the page's latency on to the summary request", async () => {
+    const fetchMock = vi.fn(async () => Response.json({}));
+    await fetchRevenueSummary("t", { baseUrl, latency: "1500", fetch: fetchMock as typeof fetch });
+    const [, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(init.headers).toMatchObject({ "X-Simulated-Latency": "1500" });
+  });
+});

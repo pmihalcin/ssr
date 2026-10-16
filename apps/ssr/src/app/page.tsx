@@ -5,11 +5,19 @@ import { fetchRecentOrders, fetchRevenueSummary, UnauthorizedError } from "@/lib
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ latency?: string | string[] }>;
+}) {
+  const { latency } = await searchParams;
   const tokens = await getSessionTokens();
   if (typeof tokens?.accessToken !== "string") redirect("/login");
 
-  const options = { baseUrl: process.env.API_BASE_URL ?? "http://localhost:5100" };
+  const options = {
+    baseUrl: process.env.API_BASE_URL ?? "http://localhost:5100",
+    latency: typeof latency === "string" ? latency : undefined,
+  };
   let orders, summary;
   try {
     [orders, summary] = await Promise.all([

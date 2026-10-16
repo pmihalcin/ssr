@@ -1,14 +1,14 @@
-import type { Order, RevenueSummary } from "@ssr/ui";
+import { latencyHeaders, type Order, type RevenueSummary } from "@ssr/ui";
 
 export class UnauthorizedError extends Error {}
 
 export async function fetchRecentOrders(
   accessToken: string,
-  options: { baseUrl: string; fetch?: typeof fetch },
+  options: { baseUrl: string; latency?: string; fetch?: typeof fetch },
 ): Promise<Order[]> {
   const doFetch = options.fetch ?? fetch;
   const response = await doFetch(new URL("/orders/recent", options.baseUrl), {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}`, ...latencyHeaders(options.latency) },
     cache: "no-store",
   });
   if (response.status === 401) throw new UnauthorizedError();
@@ -18,11 +18,11 @@ export async function fetchRecentOrders(
 
 export async function fetchRevenueSummary(
   accessToken: string,
-  options: { baseUrl: string; fetch?: typeof fetch },
+  options: { baseUrl: string; latency?: string; fetch?: typeof fetch },
 ): Promise<RevenueSummary> {
   const doFetch = options.fetch ?? fetch;
   const response = await doFetch(new URL("/orders/summary", options.baseUrl), {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}`, ...latencyHeaders(options.latency) },
     cache: "no-store",
   });
   if (response.status === 401) throw new UnauthorizedError();

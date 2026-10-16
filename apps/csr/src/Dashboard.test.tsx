@@ -24,7 +24,10 @@ function respondWith(status: number, body: unknown = []) {
   return fetchMock;
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  window.history.replaceState(null, "", "/");
+});
 
 describe("Dashboard", () => {
   it("fetches recent orders from the same-origin /api and lists them", async () => {
@@ -44,6 +47,23 @@ describe("Dashboard", () => {
     expect(await screen.findByText("$3,198.30")).toBeInTheDocument();
     expect(screen.getByText("$266.53")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/orders/summary", expect.anything());
+  });
+
+  it("passes the page's ?latency on with its API calls", async () => {
+    window.history.replaceState(null, "", "/?latency=1500");
+    const fetchMock = respondWith(200, [order]);
+
+    render(<Dashboard />);
+
+    await screen.findByText("ORD-1012");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/orders/recent",
+      expect.objectContaining({ headers: { "X-Simulated-Latency": "1500" } }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/orders/summary",
+      expect.objectContaining({ headers: { "X-Simulated-Latency": "1500" } }),
+    );
   });
 
   it("shows a loading state before the orders arrive", () => {

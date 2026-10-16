@@ -1,3 +1,4 @@
 export type { LineItem, Order, OrderStatus, RevenueSummary } from "./orders";
 export { RecentOrdersList } from "./RecentOrdersList";
 export { RevenueSummaryCards } from "./RevenueSummaryCards";
+export { latencyHeaders, SIMULATED_LATENCY_HEADER, withLatency } from "./latency";

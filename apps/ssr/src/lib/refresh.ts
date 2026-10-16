@@ -14,6 +14,14 @@ export function needsRefresh(token: TokenSet, now = nowInSeconds()): boolean {
   return typeof token.expiresAt === "number" && token.expiresAt - now <= refreshWindowSeconds;
 }
 
+type RefreshOptions = { tokenUrl: string; clientId: string; clientSecret: string; fetch?: typeof fetch; now?: number };
+
+/** Refreshes the session's tokens when the access token expires within the refresh window. */
+export async function keepFresh<T extends TokenSet>(token: T, options: RefreshOptions): Promise<T> {
+  if (!needsRefresh(token, options.now)) return token;
+  return { ...token, ...(await refreshTokens(token, options)) };
+}
+
 /**
  * Trades the refresh token for new tokens. A rejected refresh (expired refresh token,
  * revoked session) yields a token without an access token and with `error` set, so the
@@ -21,7 +29,7 @@ export function needsRefresh(token: TokenSet, now = nowInSeconds()): boolean {
  */
 export async function refreshTokens(
   token: TokenSet,
-  options: { tokenUrl: string; clientId: string; clientSecret: string; fetch?: typeof fetch; now?: number },
+  options: RefreshOptions,
 ): Promise<TokenSet> {
   const failed: TokenSet = { ...token, accessToken: undefined, error: "RefreshTokenError" };
   if (!token.refreshToken) return failed;

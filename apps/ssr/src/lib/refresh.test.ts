@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { needsRefresh, refreshTokens, type TokenSet } from "./refresh";
+import { keepFresh, needsRefresh, refreshTokens, type TokenSet } from "./refresh";
 
 const endpoint = { tokenUrl: "http://kc/token", clientId: "ssr-app", clientSecret: "secret" };
 const now = 1_000_000;
@@ -48,5 +48,32 @@ describe("refreshTokens", () => {
 
     expect(result.error).toBe("RefreshTokenError");
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("keepFresh", () => {
+  it("leaves a token with plenty of lifetime left alone", async () => {
+    const fetch = vi.fn();
+    const token = { accessToken: "current", refreshToken: "r1", expiresAt: now + 240 };
+
+    expect(await keepFresh(token, { ...endpoint, fetch, now })).toBe(token);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("refreshes a token about to expire and keeps the rest of the session", async () => {
+    const fetch = respond(200, { access_token: "new", refresh_token: "r2", expires_in: 300 });
+
+    const result = await keepFresh({ ...stale, idToken: "id", sub: "user" }, { ...endpoint, fetch, now });
+
+    expect(result).toEqual({ accessToken: "new", refreshToken: "r2", expiresAt: now + 300, idToken: "id", sub: "user" });
+  });
+
+  it("flags an error on the session when the refresh is rejected", async () => {
+    const fetch = respond(400, { error: "invalid_grant" });
+
+    const result = await keepFresh({ ...stale, idToken: "id" }, { ...endpoint, fetch, now });
+
+    expect(result).toMatchObject({ error: "RefreshTokenError", idToken: "id" });
+    expect(result.accessToken).toBeUndefined();
   });
 });

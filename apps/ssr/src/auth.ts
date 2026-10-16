@@ -1,7 +1,7 @@
 import { getToken, type JWT } from "next-auth/jwt";
 import NextAuth from "next-auth";
 import { headers } from "next/headers";
-import { needsRefresh, refreshTokens, type TokenSet } from "@/lib/refresh";
+import { keepFresh, type TokenSet } from "@/lib/refresh";
 
 const publicIssuer = process.env.KEYCLOAK_ISSUER ?? "http://localhost:8080/realms/ssr";
 // Containers reach Keycloak on its service name, while the browser uses the public issuer.
@@ -42,9 +42,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.expiresAt = account.expires_at;
         return token;
       }
-      const tokens = token as TokenSet;
-      if (!needsRefresh(tokens)) return token;
-      return { ...token, ...(await refreshTokens(tokens, { tokenUrl, clientId, clientSecret })) };
+      return keepFresh(token as JWT & TokenSet, { tokenUrl, clientId, clientSecret });
     },
   },
 });

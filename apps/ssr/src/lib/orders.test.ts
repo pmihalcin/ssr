@@ -12,7 +12,7 @@ describe("fetchRecentOrders", () => {
 
     expect(result).toEqual(orders);
     const [url, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
-    expect(url.toString()).toBe("http://api:8080/api/orders/recent");
+    expect(url.toString()).toBe("http://api:8080/orders/recent");
     expect(init.headers).toEqual({ Authorization: "Bearer secret-token" });
   });
 

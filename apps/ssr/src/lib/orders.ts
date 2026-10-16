@@ -7,7 +7,7 @@ export async function fetchRecentOrders(
   options: { baseUrl: string; fetch?: typeof fetch },
 ): Promise<Order[]> {
   const doFetch = options.fetch ?? fetch;
-  const response = await doFetch(new URL("/api/orders/recent", options.baseUrl), {
+  const response = await doFetch(new URL("/orders/recent", options.baseUrl), {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
   });

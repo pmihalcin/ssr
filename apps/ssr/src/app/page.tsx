@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { RecentOrdersList } from "@ssr/ui";
+import { RecentOrdersList, RevenueSummaryCards } from "@ssr/ui";
 import { getSessionTokens } from "@/auth";
-import { fetchRecentOrders, UnauthorizedError } from "@/lib/orders";
+import { fetchRecentOrders, fetchRevenueSummary, UnauthorizedError } from "@/lib/orders";
 
 export const dynamic = "force-dynamic";
 
@@ -9,11 +9,13 @@ export default async function DashboardPage() {
   const tokens = await getSessionTokens();
   if (typeof tokens?.accessToken !== "string") redirect("/login");
 
-  let orders;
+  const options = { baseUrl: process.env.API_BASE_URL ?? "http://localhost:5100" };
+  let orders, summary;
   try {
-    orders = await fetchRecentOrders(tokens.accessToken, {
-      baseUrl: process.env.API_BASE_URL ?? "http://localhost:5100",
-    });
+    [orders, summary] = await Promise.all([
+      fetchRecentOrders(tokens.accessToken, options),
+      fetchRevenueSummary(tokens.accessToken, options),
+    ]);
   } catch (error) {
     if (error instanceof UnauthorizedError) redirect("/login");
     throw error;
@@ -29,6 +31,7 @@ export default async function DashboardPage() {
           </button>
         </form>
       </header>
+      <RevenueSummaryCards summary={summary} />
       <h2 className="mb-2 text-lg font-medium">Recent orders</h2>
       <RecentOrdersList orders={orders} />
     </main>

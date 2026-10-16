@@ -10,5 +10,7 @@ public static class OrdersEndpoints
 
         orders.MapGet("/recent", () =>
             SeedOrders.All.OrderByDescending(order => order.PlacedAt).Take(RecentCount));
+
+        orders.MapGet("/summary", () => RevenueSummary.Of(SeedOrders.All));
     }
 }

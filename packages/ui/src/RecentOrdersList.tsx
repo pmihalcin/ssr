@@ -1,6 +1,6 @@
+import { money } from "./format";
 import type { Order } from "./orders";
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const date = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "short",

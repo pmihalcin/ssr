@@ -12,8 +12,14 @@ const order: Order = {
   lineItems: [],
 };
 
+const summary = { totalRevenue: 3198.3, orderCount: 12, averageOrderValue: 266.53 };
+
 function respondWith(status: number, body: unknown = []) {
-  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status }));
+  const fetchMock = vi.fn(async (url: string) =>
+    status === 200 && url.endsWith("/summary")
+      ? Response.json(summary)
+      : new Response(JSON.stringify(body), { status }),
+  );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
@@ -30,6 +36,16 @@ describe("Dashboard", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/orders/recent", expect.anything());
   });
 
+  it("fetches the revenue summary through the BFF and shows it", async () => {
+    const fetchMock = respondWith(200, [order]);
+
+    render(<Dashboard />);
+
+    expect(await screen.findByText("$3,198.30")).toBeInTheDocument();
+    expect(screen.getByText("$266.53")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/orders/summary", expect.anything());
+  });
+
   it("shows a loading state before the orders arrive", () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
 
@@ -43,7 +59,7 @@ describe("Dashboard", () => {
 
     render(<Dashboard />);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Could not load orders");
+    expect(await screen.findByText("Could not load orders.")).toBeInTheDocument();
   });
 
   it("starts the login again when the session has expired", async () => {

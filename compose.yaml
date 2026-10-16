@@ -31,3 +31,19 @@ services:
     depends_on:
       keycloak:
         condition: service_healthy
+
+  csr:
+    build:
+      context: .
+      dockerfile: services/bff/Dockerfile
+    environment:
+      Oidc__Authority: http://localhost:8080/realms/ssr
+      Oidc__MetadataAddress: http://keycloak:8080/realms/ssr/.well-known/openid-configuration
+      Oidc__RequireHttpsMetadata: "false"
+      Api__BaseAddress: http://api:8080
+      # The stack is served over plain http on localhost.
+      Session__InsecureCookies: "true"
+    ports:
+      - "5000:8080"
+    depends_on:
+      - api

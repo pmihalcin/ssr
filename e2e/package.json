@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p .",
+    "screenshots": "node --experimental-strip-types screenshots.ts",
     "test": "playwright test"
   },
   "devDependencies": {

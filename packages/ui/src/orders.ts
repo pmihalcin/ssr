@@ -15,3 +15,9 @@ export interface Order {
   total: number;
   lineItems: LineItem[];
 }
+
+export interface RevenueSummary {
+  totalRevenue: number;
+  orderCount: number;
+  averageOrderValue: number;
+}

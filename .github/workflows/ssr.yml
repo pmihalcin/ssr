@@ -1,0 +1,27 @@
+name: SSR
+
+on:
+  push:
+    branches: [main]
+    paths: [apps/ssr/**, packages/ui/**, pnpm-lock.yaml, .github/workflows/ssr.yml]
+  pull_request:
+    paths: [apps/ssr/**, packages/ui/**, pnpm-lock.yaml, .github/workflows/ssr.yml]
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ssr/ui typecheck
+      - run: pnpm --filter @ssr/ui test
+      - run: pnpm --filter @ssr/ssr typecheck
+      - run: pnpm --filter @ssr/ssr test
+      - run: pnpm --filter @ssr/ssr build
+        env:
+          AUTH_SECRET: ci-build-secret

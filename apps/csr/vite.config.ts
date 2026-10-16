@@ -8,8 +8,8 @@ export default defineConfig({
   server: {
     // In dev the BFF (dotnet run in services/bff) still owns login and the API proxy.
     proxy: {
-      "/api": "http://localhost:5000",
-      "/bff": "http://localhost:5000",
+      "/api": "http://localhost:5200",
+      "/bff": "http://localhost:5200",
     },
   },
   test: {

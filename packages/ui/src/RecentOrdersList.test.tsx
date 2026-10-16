@@ -49,4 +49,21 @@ describe("RecentOrdersList", () => {
     expect(screen.getByText("No orders yet.")).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
+
+  it("links each order number to its detail page", () => {
+    render(<RecentOrdersList orders={orders} />);
+
+    expect(screen.getByRole("link", { name: "ORD-1012" })).toHaveAttribute("href", "/orders/ord_1012");
+  });
+
+  it("uses the given link component for the order links", () => {
+    const Link = ({ href, children }: { href: string; children: React.ReactNode }) => (
+      <a href={href} data-custom>
+        {children}
+      </a>
+    );
+    render(<RecentOrdersList orders={orders} Link={Link} />);
+
+    expect(screen.getByRole("link", { name: "ORD-1011" })).toHaveAttribute("data-custom");
+  });
 });

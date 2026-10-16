@@ -1,0 +1,16 @@
+{
+  "name": "@ssr/e2e",
+  "private": true,
+  "description": "Playwright smoke tests that run against the full docker compose stack.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "screenshots": "node --experimental-strip-types screenshots.ts",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { RecentOrdersList, type Order } from "@ssr/ui";
-import { fetchRecentOrders, UnauthorizedError } from "./api";
+import { markDataVisible, RecentOrdersList, RevenueSummaryCards, type Order, type RevenueSummary } from "@ssr/ui";
+import { Link } from "./router";
+import { fetchRecentOrders, fetchRevenueSummary, UnauthorizedError } from "./api";
 
 function login() {
   const returnUrl = window.location.pathname + window.location.search;
@@ -9,8 +10,11 @@ function login() {
 
 type State = { status: "loading" } | { status: "error" } | { status: "loaded"; orders: Order[] };
 
+type SummaryState = { status: "loading" } | { status: "error" } | { status: "loaded"; summary: RevenueSummary };
+
 export function Dashboard({ onSessionExpired = login }: { onSessionExpired?: () => void }) {
   const [state, setState] = useState<State>({ status: "loading" });
+  const [summary, setSummary] = useState<SummaryState>({ status: "loading" });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -22,8 +26,20 @@ export function Dashboard({ onSessionExpired = login }: { onSessionExpired?: () 
         else setState({ status: "error" });
       },
     );
+    fetchRevenueSummary(controller.signal).then(
+      (loaded) => setSummary({ status: "loaded", summary: loaded }),
+      (error: unknown) => {
+        if (controller.signal.aborted) return;
+        if (error instanceof UnauthorizedError) onSessionExpired();
+        else setSummary({ status: "error" });
+      },
+    );
     return () => controller.abort();
   }, [onSessionExpired]);
+
+  useEffect(() => {
+    if (state.status === "loaded") markDataVisible();
+  }, [state.status]);
 
   return (
     <main className="mx-auto max-w-4xl p-6">
@@ -35,6 +51,13 @@ export function Dashboard({ onSessionExpired = login }: { onSessionExpired?: () 
           </button>
         </form>
       </header>
+      {summary.status === "loading" && <p className="mb-8 text-slate-500">Loading summary…</p>}
+      {summary.status === "error" && (
+        <p role="alert" className="mb-8 text-red-700">
+          Could not load the revenue summary.
+        </p>
+      )}
+      {summary.status === "loaded" && <RevenueSummaryCards summary={summary.summary} />}
       <h2 className="mb-2 text-lg font-medium">Recent orders</h2>
       {state.status === "loading" && <p className="text-slate-500">Loading orders…</p>}
       {state.status === "error" && (
@@ -42,7 +65,7 @@ export function Dashboard({ onSessionExpired = login }: { onSessionExpired?: () 
           Could not load orders.
         </p>
       )}
-      {state.status === "loaded" && <RecentOrdersList orders={state.orders} />}
+      {state.status === "loaded" && <RecentOrdersList orders={state.orders} Link={Link} />}
     </main>
   );
 }

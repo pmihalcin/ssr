@@ -23,6 +23,7 @@ builder.Services
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.Cookie.SecurePolicy = insecureCookies ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
         // API calls from the SPA must get a plain 401 so it can start the login itself.
+        options.Events.OnValidatePrincipal = TokenRefresh.ValidateAsync;
         options.Events.OnRedirectToLogin = context =>
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;

@@ -112,11 +112,27 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:5100/orders/recent
 
 Without the header the API returns `401`. Tokens last 5 minutes.
 
-## API tests
+## Tests
 
 ```sh
-cd services/api && dotnet test
+pnpm -r --filter '!@ssr/e2e' test    # Vitest: ui, csr, ssr
+cd services/api && dotnet test       # Orders API
+cd services/bff && dotnet test       # CSR BFF, including token refresh
 ```
+
+The Playwright smoke tests are described [below](#smoke-tests). To watch them, run `pnpm --filter @ssr/e2e exec playwright test --ui`.
+
+### Manual checks
+
+With the stack running, log in as `alice` / `alice` on both apps (http://localhost:5200 and http://localhost:3000):
+
+| Check | Expected |
+| --- | --- |
+| Open the Dashboard | Recent Orders and the revenue summary (total revenue, Orders, average order value) |
+| Open an Order, then try its URL while logged out | Line Items shown; after login you land back on that Order |
+| Add `?latency=1500` | API calls wait 1500 ms; the parameter survives login and navigation to an Order |
+| Read the timing overlay at 0 and 1500 ms | CSR: TTFB in tens of ms, data visible after the API answers. SSR: TTFB takes the whole latency, data visible right after FCP |
+| Reload more than 5 minutes after logging in | Still logged in with no redirect to Keycloak, because each BFF refreshes the token server-side |
 
 ## Smoke tests
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { RecentOrdersList, RevenueSummaryCards, type Order, type RevenueSummary } from "@ssr/ui";
+import { Link } from "./router";
 import { fetchRecentOrders, fetchRevenueSummary, UnauthorizedError } from "./api";
 
 function login() {
@@ -60,7 +61,7 @@ export function Dashboard({ onSessionExpired = login }: { onSessionExpired?: () 
           Could not load orders.
         </p>
       )}
-      {state.status === "loaded" && <RecentOrdersList orders={state.orders} />}
+      {state.status === "loaded" && <RecentOrdersList orders={state.orders} Link={Link} />}
     </main>
   );
 }

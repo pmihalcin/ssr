@@ -1,5 +1,6 @@
 import { money } from "./format";
 import type { Order } from "./orders";
+import { PlainLink, type LinkComponent } from "./OrderLink";
 
 const date = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -8,7 +9,7 @@ const date = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
-export function RecentOrdersList({ orders }: { orders: readonly Order[] }) {
+export function RecentOrdersList({ orders, Link = PlainLink }: { orders: readonly Order[]; Link?: LinkComponent }) {
   if (orders.length === 0) {
     return <p className="text-slate-500">No orders yet.</p>;
   }
@@ -27,7 +28,11 @@ export function RecentOrdersList({ orders }: { orders: readonly Order[] }) {
       <tbody>
         {orders.map((order) => (
           <tr key={order.id} className="border-b border-slate-100">
-            <td className="py-2 font-medium">{order.number}</td>
+            <td className="py-2 font-medium">
+              <Link href={`/orders/${order.id}`} className="text-blue-700 hover:underline">
+                {order.number}
+              </Link>
+            </td>
             <td className="py-2">{order.customer}</td>
             <td className="py-2">{order.status}</td>
             <td className="py-2">{date.format(new Date(order.placedAt))}</td>

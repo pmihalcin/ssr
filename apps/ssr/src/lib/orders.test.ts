@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fetchRecentOrders, fetchRevenueSummary, UnauthorizedError } from "./orders";
+import { fetchOrder, fetchRecentOrders, fetchRevenueSummary, UnauthorizedError } from "./orders";
 
 const baseUrl = "http://api:8080";
 
@@ -61,6 +61,39 @@ describe("Simulated Latency", () => {
   it("passes the page's latency on to the summary request", async () => {
     const fetchMock = vi.fn(async () => Response.json({}));
     await fetchRevenueSummary("t", { baseUrl, latency: "1500", fetch: fetchMock as typeof fetch });
+    const [, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(init.headers).toMatchObject({ "X-Simulated-Latency": "1500" });
+  });
+});
+
+describe("fetchOrder", () => {
+  it("calls the API's order endpoint with the access token", async () => {
+    const order = { id: "ord_1", number: "ORD-1" };
+    const fetchMock = vi.fn(async () => Response.json(order));
+
+    const result = await fetchOrder("secret-token", "ord_1", { baseUrl, fetch: fetchMock as typeof fetch });
+
+    expect(result).toEqual(order);
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(url.toString()).toBe("http://api:8080/orders/ord_1");
+    expect(init.headers).toEqual({ Authorization: "Bearer secret-token" });
+  });
+
+  it("resolves to null when the API answers 404", async () => {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 404 }));
+    await expect(fetchOrder("t", "nope", { baseUrl, fetch: fetchMock as typeof fetch })).resolves.toBeNull();
+  });
+
+  it("throws UnauthorizedError when the API answers 401", async () => {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 401 }));
+    await expect(fetchOrder("t", "x", { baseUrl, fetch: fetchMock as typeof fetch })).rejects.toBeInstanceOf(
+      UnauthorizedError,
+    );
+  });
+
+  it("passes the page's latency on", async () => {
+    const fetchMock = vi.fn(async () => Response.json({}));
+    await fetchOrder("t", "x", { baseUrl, latency: "1500", fetch: fetchMock as typeof fetch });
     const [, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
     expect(init.headers).toMatchObject({ "X-Simulated-Latency": "1500" });
   });

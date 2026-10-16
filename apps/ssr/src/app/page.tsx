@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { RecentOrdersList, RevenueSummaryCards, withLatency } from "@ssr/ui";
+import { OrderLink } from "@/components/OrderLink";
 import { getSessionTokens } from "@/auth";
 import { loginUrl } from "@/lib/login";
 import { fetchRecentOrders, fetchRevenueSummary, UnauthorizedError } from "@/lib/orders";
@@ -41,7 +42,7 @@ export default async function DashboardPage({
       </header>
       <RevenueSummaryCards summary={summary} />
       <h2 className="mb-2 text-lg font-medium">Recent orders</h2>
-      <RecentOrdersList orders={orders} />
+      <RecentOrdersList orders={orders} Link={OrderLink} />
     </main>
   );
 }

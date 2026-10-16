@@ -1,5 +1,8 @@
 {
   "name": "ssr-vs-csr",
   "private": true,
-  "packageManager": "pnpm@12.3.4"
+  "packageManager": "pnpm@12.3.4",
+  "devDependencies": {
+    "@ai-hero/sandcastle": "^0.12.0"
+  }
 }

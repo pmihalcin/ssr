@@ -25,6 +25,8 @@ This starts:
 
 - Keycloak on http://localhost:8080 (admin console: `admin` / `admin`) with the `ssr` realm, the `csr-bff` and `ssr-app` clients and the test user `alice` / `alice`
 - The API on http://localhost:5100
+- The CSR app (ASP.NET BFF + Vite SPA) on http://localhost:5200
+- The SSR app (Next.js App Router, production build) on http://localhost:3000
 
 ## Get a token and curl the API
 

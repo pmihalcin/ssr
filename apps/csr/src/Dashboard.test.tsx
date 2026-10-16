@@ -66,6 +66,17 @@ describe("Dashboard", () => {
     );
   });
 
+  it("marks Data visible only once the orders are on screen", async () => {
+    performance.clearMarks();
+    respondWith(200, [order]);
+
+    render(<Dashboard />);
+
+    expect(performance.getEntriesByName("data-visible", "mark")).toHaveLength(0);
+    await screen.findByText("ORD-1012");
+    await waitFor(() => expect(performance.getEntriesByName("data-visible", "mark")).toHaveLength(1));
+  });
+
   it("shows a loading state before the orders arrive", () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
 

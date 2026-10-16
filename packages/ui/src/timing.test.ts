@@ -1,4 +1,12 @@
-import { DATA_VISIBLE_MARK, HYDRATED_MARK, formatMs, markHydrated, readTimings } from "./timing";
+import {
+  DATA_VISIBLE_MARK,
+  HYDRATED_MARK,
+  dataVisibleScript,
+  formatMs,
+  markDataVisible,
+  markHydrated,
+  readTimings,
+} from "./timing";
 
 function source(entries: { type: string; name: string; startTime: number; responseStart?: number }[]) {
   return {
@@ -52,5 +60,76 @@ describe("markHydrated", () => {
     markHydrated(target);
     markHydrated(target);
     expect(marks).toEqual([HYDRATED_MARK]);
+  });
+});
+
+function recorder() {
+  const marks: string[] = [];
+  const target = {
+    mark: (name: string) => marks.push(name),
+    getEntriesByName: (name: string) => marks.filter((mark) => mark === name),
+  } as unknown as Pick<Performance, "mark" | "getEntriesByName">;
+  return { marks, target };
+}
+
+function nextFrame() {
+  let frame: FrameRequestCallback = () => {};
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+    frame = callback;
+    return 1;
+  });
+  return () => frame(0);
+}
+
+describe("markDataVisible", () => {
+  beforeEach(() => vi.useFakeTimers({ toFake: ["setTimeout"] }));
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("marks once the next frame has been painted, not before", () => {
+    const paint = nextFrame();
+    const { marks, target } = recorder();
+
+    markDataVisible(target);
+    expect(marks).toEqual([]);
+
+    paint();
+    vi.runAllTimers();
+    expect(marks).toEqual([DATA_VISIBLE_MARK]);
+  });
+
+  it("marks once", () => {
+    const paint = nextFrame();
+    const { marks, target } = recorder();
+
+    markDataVisible(target);
+    paint();
+    vi.runAllTimers();
+    markDataVisible(target);
+    paint();
+    vi.runAllTimers();
+    expect(marks).toEqual([DATA_VISIBLE_MARK]);
+  });
+});
+
+describe("dataVisibleScript", () => {
+  beforeEach(() => vi.useFakeTimers({ toFake: ["setTimeout"] }));
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    performance.clearMarks();
+  });
+
+  it("puts the same Data visible mark on the page after the next paint", () => {
+    const paint = nextFrame();
+
+    new Function(dataVisibleScript)();
+    expect(performance.getEntriesByName(DATA_VISIBLE_MARK, "mark")).toHaveLength(0);
+
+    paint();
+    vi.runAllTimers();
+    expect(performance.getEntriesByName(DATA_VISIBLE_MARK, "mark")).toHaveLength(1);
   });
 });

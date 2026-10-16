@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import { RecentOrdersList, RevenueSummaryCards } from "@ssr/ui";
+import { RecentOrdersList, RevenueSummaryCards, withLatency } from "@ssr/ui";
 import { getSessionTokens } from "@/auth";
+import { loginUrl } from "@/lib/login";
 import { fetchRecentOrders, fetchRevenueSummary, UnauthorizedError } from "@/lib/orders";
 
 export const dynamic = "force-dynamic";
@@ -10,14 +11,13 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ latency?: string | string[] }>;
 }) {
-  const { latency } = await searchParams;
+  const params = await searchParams;
+  const latency = typeof params.latency === "string" ? params.latency : undefined;
+  const login = loginUrl(withLatency("/", latency));
   const tokens = await getSessionTokens();
-  if (typeof tokens?.accessToken !== "string") redirect("/login");
+  if (typeof tokens?.accessToken !== "string") redirect(login);
 
-  const options = {
-    baseUrl: process.env.API_BASE_URL ?? "http://localhost:5100",
-    latency: typeof latency === "string" ? latency : undefined,
-  };
+  const options = { baseUrl: process.env.API_BASE_URL ?? "http://localhost:5100", latency };
   let orders, summary;
   try {
     [orders, summary] = await Promise.all([
@@ -25,7 +25,7 @@ export default async function DashboardPage({
       fetchRevenueSummary(tokens.accessToken, options),
     ]);
   } catch (error) {
-    if (error instanceof UnauthorizedError) redirect("/login");
+    if (error instanceof UnauthorizedError) redirect(login);
     throw error;
   }
 

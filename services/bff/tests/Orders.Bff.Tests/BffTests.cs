@@ -14,6 +14,7 @@ public class BffTests(BffFactory factory) : IClassFixture<BffFactory>
     [Fact]
     public async Task Unauthenticated_api_calls_get_401_instead_of_a_login_redirect()
     {
+        factory.ApiRequests.Clear();
         var response = await NewClient().GetAsync("/api/orders/recent");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -47,6 +48,20 @@ public class BffTests(BffFactory factory) : IClassFixture<BffFactory>
         Assert.Equal("http://api.test/orders/recent", forwarded.RequestUri!.ToString());
         Assert.Equal("Bearer the-access-token", forwarded.Headers.Authorization!.ToString());
         Assert.False(forwarded.Headers.Contains("Cookie"));
+    }
+
+    [Fact]
+    public async Task Api_calls_pass_the_simulated_latency_on_to_the_api()
+    {
+        factory.ApiRequests.Clear();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/orders/summary");
+        request.Headers.Add("Cookie", factory.SessionCookieFor("the-access-token"));
+        request.Headers.Add("X-Simulated-Latency", "1500");
+
+        await NewClient().SendAsync(request);
+
+        var forwarded = Assert.Single(factory.ApiRequests);
+        Assert.Equal(["1500"], forwarded.Headers.GetValues("X-Simulated-Latency"));
     }
 
     [Fact]

@@ -11,6 +11,7 @@
       "emailVerified": true,
       "firstName": "Alice",
       "lastName": "Tester",
+      "realmRoles": ["default-roles-ssr"],
       "credentials": [{ "type": "password", "value": "alice", "temporary": false }]
     }
   ],

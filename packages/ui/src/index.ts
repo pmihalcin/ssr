@@ -4,3 +4,7 @@ export { RevenueSummaryCards } from "./RevenueSummaryCards";
 export { latencyHeaders, SIMULATED_LATENCY_HEADER, withLatency } from "./latency";
 export { OrderDetail, OrderNotFound } from "./OrderDetail";
 export type { LinkComponent } from "./OrderLink";
+export { TimingOverlay } from "./TimingOverlay";
+export { DataVisibleMark } from "./DataVisibleMark";
+export { formatMs, markDataVisible, markHydrated, readTimings } from "./timing";
+export type { Timings } from "./timing";

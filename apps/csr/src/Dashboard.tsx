@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { RecentOrdersList, RevenueSummaryCards, type Order, type RevenueSummary } from "@ssr/ui";
+import { markDataVisible, RecentOrdersList, RevenueSummaryCards, type Order, type RevenueSummary } from "@ssr/ui";
 import { Link } from "./router";
 import { fetchRecentOrders, fetchRevenueSummary, UnauthorizedError } from "./api";
 
@@ -36,6 +36,10 @@ export function Dashboard({ onSessionExpired = login }: { onSessionExpired?: () 
     );
     return () => controller.abort();
   }, [onSessionExpired]);
+
+  useEffect(() => {
+    if (state.status === "loaded") markDataVisible();
+  }, [state.status]);
 
   return (
     <main className="mx-auto max-w-4xl p-6">

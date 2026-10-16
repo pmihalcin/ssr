@@ -44,6 +44,6 @@ services:
       # The stack is served over plain http on localhost.
       Session__InsecureCookies: "true"
     ports:
-      - "5000:8080"
+      - "5200:8080"
     depends_on:
       - api

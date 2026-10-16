@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using System.Net;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -32,6 +33,20 @@ public class BffTests(BffFactory factory) : IClassFixture<BffFactory>
         Assert.Contains("response_type=code", location);
         Assert.Contains("code_challenge_method=S256", location);
         Assert.Contains("client_id=csr-bff", location);
+    }
+
+    [Fact]
+    public async Task Unauthenticated_deep_links_return_to_the_same_page_after_login()
+    {
+        var response = await NewClient().GetAsync("/orders/ord_1012?latency=1500");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        var location = response.Headers.Location!;
+        Assert.StartsWith(BffFactory.AuthorizationEndpoint, location.ToString());
+        var state = System.Web.HttpUtility.ParseQueryString(location.Query)["state"]!;
+        var options = factory.Services.GetRequiredService<IOptionsMonitor<OpenIdConnectOptions>>()
+            .Get(OpenIdConnectDefaults.AuthenticationScheme);
+        Assert.Equal("/orders/ord_1012?latency=1500", options.StateDataFormat.Unprotect(state)!.RedirectUri);
     }
 
     [Fact]
